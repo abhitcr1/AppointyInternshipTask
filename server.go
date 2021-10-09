@@ -39,7 +39,7 @@ func ConnecttoDB() *mongo.Collection {
 
 	// Set client options
 	//change the URI according to your database
-	clientOptions := options.Client().ApplyURI("mongodb+srv://abhitcr1:Abhit1010@cluster0.yg0tb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+	clientOptions := options.Client().ApplyURI("mongodb+srv://abhitcr1:RandomPassword@cluster0.yg0tb.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
 
 	
 	// Connect to MongoDB
