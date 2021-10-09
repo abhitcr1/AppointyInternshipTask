@@ -117,3 +117,43 @@ func createuser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	json.NewEncoder(w).Encode(result)
 }
+//Function to search User by ID
+func getUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var User User
+
+	// string to primitive.ObjectID (typeCasting)
+	id, _ := primitive.ObjectIDFromHex(ps.ByName("id"))
+
+	// creating filter of unordered map with ID as input
+	filter := bson.M{"_id": id}
+
+	//Searching in DB with given ID as keyword
+	err := collection.FindOne(context.TODO(), filter).Decode(&User)
+	//Error Handling
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	json.NewEncoder(w).Encode(User)
+}
+
+fmt.Fprintf(w, `Hello world`)
+func searchUserUsingID(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var article Article
+
+	//recovers the argument of search query present in URL after "q"
+	title := string(r.URL.Query().Get("q"))
+
+	//makes an unordered map filter of title
+	filter := bson.M{"title": title}
+
+	//Searching in DB with given title as keyword
+	err := collection.FindOne(context.TODO(), filter).Decode(&article)
+	//Error Handling
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.NewEncoder(w).Encode(article)
+}
