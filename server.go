@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,11 +26,11 @@ func main() {
 
 	//Routing for different HTTP methods
 	router.GET("/", showHome)
-	router.GET("/article", getUserPosts)
-	router.GET("/article/:id", getUser)
-	router.GET("/articles/search?q=title", searchUser)
-	router.POST("/articles", createPost)
-	router.POST("/articles", createUser)
+	router.GET("/User", getUserPosts)
+	router.GET("/User/:id", getUser)
+	router.GET("/user/search?q=title", searchUser)
+	router.POST("/user", createPost)
+	router.POST("/user", createUser)
 	// set our port address as 8081
 	log.Fatal(http.ListenAndServe(":8081", router))
 }
@@ -54,4 +56,64 @@ func ConnecttoDB() *mongo.Collection {
 	collection := client.Database("Appointy").Collection("InstaPosts")
 
 	return collection
+}
+//Function to get all user in DataBase
+func getUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// User array
+	var user []User
+
+	// bson.M{},  we passed empty filter of unordered map.
+	cur, err := collection.Find(context.TODO(), bson.M{})
+
+	//Error Handling
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Close the cursor once finished
+	defer cur.Close(context.TODO())
+
+	//Loops over the cursor stream and appends to []User array
+	for cur.Next(context.TODO()) {
+
+		// create a value into which the single document can be decoded
+		var User User
+		// decode similar to deserialize process.
+		err := cur.Decode(&User)
+
+		//Error Handling
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// add item our array
+		user = append(user, User)
+	}
+	//Error Handling
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	//Encoding the data in Array to JSON format
+	json.NewEncoder(w).Encode(user)
+
+}
+//Function to create a new user in Database
+func createuser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var user user
+
+	//Decoding the Data from JSON format to user variable
+	_ = json.NewDecoder(r.Body).Decode(&user)
+	//inserts the data from decoded var to MongoDB in BSON format
+	result, err := collection.InsertOne(context.TODO(), user)
+	//Error Handling
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	json.NewEncoder(w).Encode(result)
 }
